@@ -19,5 +19,6 @@ public class Room {
     @Id
     private String id; //mongo identifier
     private String roomId;
+    private String password;
     private List<Message> messages = new ArrayList<>();
 }

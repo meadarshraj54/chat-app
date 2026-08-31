@@ -126,9 +126,27 @@ const ChatPage = () => {
   function formatTime(timestamp) {
     if (!timestamp) return "";
     try {
-      const date = new Date(timestamp);
+      let date;
+      if (typeof timestamp === "string") {
+        let str = timestamp.trim();
+        if (str.includes(" ") && !str.includes("T")) {
+          str = str.replace(" ", "T");
+        }
+        date = new Date(str);
+      } else if (Array.isArray(timestamp)) {
+        const [year, month, day, hour = 0, minute = 0, second = 0] = timestamp;
+        date = new Date(year, month - 1, day, hour, minute, second);
+      } else {
+        date = new Date(timestamp);
+      }
+
       if (isNaN(date.getTime())) return "";
-      return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+      return date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
     } catch {
       return "";
     }
@@ -197,30 +215,36 @@ const ChatPage = () => {
             return (
               <div
                 key={index}
-                className={`flex items-end gap-2 sm:gap-3 ${
-                  isSelf ? "justify-end" : "justify-start"
+                className={`flex flex-col max-w-[85%] sm:max-w-md ${
+                  isSelf ? "ml-auto items-end" : "mr-auto items-start"
                 }`}
               >
-                {/* Avatar for receiver (left) */}
-                {!isSelf && (
-                  <img
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-800 border border-slate-700 flex-shrink-0 shadow-sm"
-                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                      message.sender || "User"
-                    )}`}
-                    alt={message.sender}
-                  />
-                )}
-
-                {/* Message Bubble Container */}
-                <div
-                  className={`flex flex-col max-w-[84%] sm:max-w-md space-y-1 ${
-                    isSelf ? "items-end" : "items-start"
+                {/* Sender Label */}
+                <span
+                  className={`text-[10px] sm:text-xs text-slate-400 font-semibold mb-1 ${
+                    isSelf ? "pr-10 sm:pr-11 text-right" : "pl-10 sm:pl-11 text-left"
                   }`}
                 >
-                  <span className="text-[10px] sm:text-xs text-slate-400 font-semibold px-1">
-                    {message.sender}
-                  </span>
+                  {message.sender}
+                </span>
+
+                {/* Avatar + Chat Bubble Row */}
+                <div
+                  className={`flex items-start gap-2 sm:gap-2.5 ${
+                    isSelf ? "flex-row-reverse" : "flex-row"
+                  }`}
+                >
+                  <img
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex-shrink-0 shadow-sm ${
+                      isSelf
+                        ? "bg-indigo-900 border border-indigo-700"
+                        : "bg-slate-800 border border-slate-700"
+                    }`}
+                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+                      (isSelf ? currentUser : message.sender) || "User"
+                    )}`}
+                    alt={isSelf ? currentUser : message.sender}
+                  />
 
                   <div
                     className={`p-3 sm:p-3.5 rounded-2xl text-sm sm:text-base leading-relaxed break-words shadow-md ${
@@ -231,23 +255,17 @@ const ChatPage = () => {
                   >
                     {message.content}
                   </div>
-
-                  {timeStr && (
-                    <span className="text-[10px] text-slate-500 px-1 font-medium">
-                      {timeStr}
-                    </span>
-                  )}
                 </div>
 
-                {/* Avatar for sender (right) */}
-                {isSelf && (
-                  <img
-                    className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-indigo-900 border border-indigo-700 flex-shrink-0 shadow-sm"
-                    src={`https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-                      currentUser || "Me"
-                    )}`}
-                    alt={currentUser}
-                  />
+                {/* Timestamp */}
+                {timeStr && (
+                  <span
+                    className={`text-[10px] text-slate-500 font-medium mt-1 ${
+                      isSelf ? "pr-10 sm:pr-11 text-right" : "pl-10 sm:pl-11 text-left"
+                    }`}
+                  >
+                    {timeStr}
+                  </span>
                 )}
               </div>
             );
